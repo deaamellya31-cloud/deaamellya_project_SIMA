@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIMA PRO - Sistem Informasi Akademik</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --p: #8A2BE2; --pl: #E0B0FF; --pd: #6A1B9A; --bg: #F8F4FF; 
+            --w: #ffffff; --d: #333333; --g: #e0e0e0; --r: #E74C3C; --s: #27AE60;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body { background-color: var(--bg); color: var(--d); min-height: 100vh; display: flex; flex-direction: column; }
+        
+        /* Navigation */
+        .nav { background: var(--w); padding: 1rem 2rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
+        .brand { font-size: 1.5rem; font-weight: 700; color: var(--p); text-decoration: none; display: flex; align-items: center; gap: 10px; }
+        .nav-buttons { display: flex; gap: 10px; }
+        
+        /* Buttons */
+        .btn { padding: 10px 18px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; transition: 0.3s; display: inline-flex; align-items: center; gap: 8px; font-size: 0.9rem; }
+        .btn-p { background: var(--p); color: var(--w); }
+        .btn-p:hover { background: var(--pd); }
+        .btn-outline { border: 1px solid var(--p); background: transparent; color: var(--p); }
+        .btn-outline.active { background: var(--p); color: var(--w); }
+        .btn-danger { background: var(--r); color: var(--w); }
+
+        /* Layout */
+        .container { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; width: 100%; flex: 1; }
+        .view-section { display: none; animation: fadeIn 0.4s ease-out; }
+        .view-section.active { display: block; }
+        
+        /* Login Form */
+        .login-screen { display: flex; justify-content: center; align-items: center; flex-grow: 1; padding: 20px; }
+        .login-card { width: 100%; max-width: 400px; padding: 2.5rem; background: var(--w); border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        
+        /* Cards & Grid */
+        .course-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+        .course-card { background: var(--w); border-radius: 12px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-top: 4px solid var(--p); }
+        .profile-header { background: linear-gradient(135deg, var(--p), var(--pd)); color: var(--w); padding: 30px; border-radius: 15px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
+
+        /* Form Elements */
+        .field { margin-bottom: 15px; }
+        .field label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 0.9rem; }
+        .field input, .field select { width: 100%; padding: 12px; border: 1px solid var(--g); border-radius: 8px; font-size: 1rem; }
+
+        /* Tables */
+        .table-container { background: var(--w); padding: 20px; border-radius: 12px; overflow-x: auto; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        table { width: 100%; border-collapse: collapse; min-width: 600px; }
+        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #eeeeee; }
+        th { color: var(--pd); font-weight: 700; background: #f9f9f9; }
+
+        /* Modal */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: var(--w); padding: 30px; border-radius: 15px; width: 450px; max-width: 90%; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+    <div id="view-login" class="login-screen">
+        <div class="login-card">
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <h1 style="color: var(--p);"><i class="fas fa-graduation-cap"></i> SIMA</h1>
+                <p style="color: #666;">Sistem Informasi Akademik</p>
+            </div>
+            <form id="formLogin">
+                <div class="field">
+                    <label>Username / NIM</label>
+                    <input type="text" id="userInput" placeholder="Ketik 'admin' atau NIM" required>
+                </div>
+                <div class="field">
+                    <label>Password</label>
+                    <input type="password" id="passInput" placeholder="Password bebas" required>
+                </div>
+                <button type="submit" class="btn btn-p" style="width: 100%; justify-content: center;">MASUK</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="main-app" style="display: none;">
+        <nav class="nav">
+            <a href="#" class="brand"><i class="fas fa-graduation-cap"></i> SIMA</a>
+            <div class="nav-buttons">
+                <button id="nav-public" class="btn btn-outline" onclick="switchView('public')">Katalog MK</button>
+                <button id="nav-profile" class="btn btn-outline" onclick="switchView('profile')">Profil Saya</button>
+                <button id="nav-admin" class="btn btn-outline" onclick="switchView('admin')">Panel Admin</button>
+                <button class="btn btn-danger" onclick="logout()"><i class="fas fa-sign-out-alt"></i></button>
+            </div>
+        </nav>
+
+        <div class="container">
+            <section id="section-public" class="view-section">
+                <h2 style="margin-bottom: 1rem;">Mata Kuliah Tersedia</h2>
+                <div class="field">
+                    <input type="text" id="searchBox" placeholder="Cari nama atau kode mata kuliah..." onkeyup="renderPublic()">
+                </div>
+                <div id="grid-courses" class="course-grid"></div>
+            </section>
+
+            <section id="section-profile" class="view-section">
+                <div class="profile-header">
+                    <div>
+                        <p>Selamat Datang,</p>
+                        <h2 id="disp-name">Nama Mahasiswa</h2>
+                        <p id="disp-nim">NIM: -</p>
+                    </div>
+                    <div style="text-align: right;">
+                        <p>SKS Diambil</p>
+                        <h1 id="disp-sks">0</h1>
+                    </div>
+                </div>
+                <h3>Riwayat KRS & Nilai</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr><th>Kode</th><th>Mata Kuliah</th><th>SKS</th><th>Status</th><th>Nilai</th></tr>
+                        </thead>
+                        <tbody id="table-profile"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="section-admin" class="view-section">
+                <h2>Dashboard Admin</h2>
+                <div style="display: flex; gap: 10px; margin-top: 1rem; margin-bottom: 2rem;">
+                    <button class="btn btn-p" onclick="showModal('modal-course')">+ Tambah Mata Kuliah</button>
+                    <button class="btn btn-outline" onclick="exportData()">Unduh Laporan (CSV)</button>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr><th>NIM</th><th>Nama</th><th>Mata Kuliah</th><th>Status</th><th>Nilai</th><th>Aksi</th></tr>
+                        </thead>
+                        <tbody id="table-admin-enrolls"></tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <div id="modal-enroll" class="modal">
+        <div class="modal-content">
+            <h3>Daftar Mata Kuliah</h3>
+            <p id="target-course-name" style="color: var(--p); font-weight: bold; margin-bottom: 15px;"></p>
+            <form id="formEnroll">
+                <input type="hidden" id="target-id">
+                <div class="field"><label>NIM</label><input type="text" id="reg-nim" required></div>
+                <div class="field"><label>Nama Lengkap</label><input type="text" id="reg-name" required></div>
+                <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                    <button type="button" class="btn" onclick="hideModal('modal-enroll')">Batal</button>
+                    <button type="submit" class="btn btn-p">Konfirmasi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="modal-course" class="modal">
+        <div class="modal-content">
+            <h3>Tambah Mata Kuliah Baru</h3>
+            <form id="formAddCourse">
+                <div class="field"><label>Kode MK</label><input type="text" id="new-code" required></div>
+                <div class="field"><label>Nama MK</label><input type="text" id="new-name" required></div>
+                <div class="field"><label>SKS</label><input type="number" id="new-sks" value="3"></div>
+                <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                    <button type="button" class="btn" onclick="hideModal('modal-course')">Batal</button>
+                    <button type="submit" class="btn btn-p">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Data Awal
+        const initialCourses = [
+            {id: 1, code: 'INF101', name: 'Dasar Pemrograman', sks: 3},
+            {id: 2, code: 'INF102', name: 'Struktur Data', sks: 4},
+            {id: 3, code: 'DES101', name: 'Desain Grafis', sks: 2}
+        ];
+
+        let courses = JSON.parse(localStorage.getItem('sima_courses')) || initialCourses;
+        let enrollments = JSON.parse(localStorage.getItem('sima_enrolls')) || [];
+        let session = JSON.parse(localStorage.getItem('sima_session')) || null;
+
+        // Fungsi Login
+        document.getElementById('formLogin').onsubmit = function(e) {
+            e.preventDefault();
+            const user = document.getElementById('userInput').value;
+            if (user.toLowerCase() === 'admin') {
+                session = { role: 'admin', name: 'Admin Utama', nim: 'ADMIN' };
+            } else {
+                // Cari apakah NIM ini sudah pernah daftar MK sebelumnya
+                const existing = enrollments.find(en => en.nim === user);
+                session = { 
+                    role: 'student', 
+                    name: existing ? existing.name : 'Mahasiswa Baru', 
+                    nim: user 
+                };
+            }
+            localStorage.setItem('sima_session', JSON.stringify(session));
+            startApp();
+        };
+
+        function logout() {
+            localStorage.removeItem('sima_session');
+            location.reload();
+        }
+
+        // Navigasi
+        function switchView(viewName) {
+            document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-buttons .btn').forEach(b => b.classList.remove('active'));
+            
+            document.getElementById('section-' + viewName).classList.add('active');
+            const btn = document.getElementById('nav-' + viewName);
+            if(btn) btn.classList.add('active');
+            
+            if(viewName === 'public') renderPublic();
+            if(viewName === 'profile') renderProfile();
+            if(viewName === 'admin') renderAdmin();
+        }
+
+        // Render Katalog
+        function renderPublic() {
+            const grid = document.getElementById('grid-courses');
+            const search = document.getElementById('searchBox').value.toLowerCase();
+            grid.innerHTML = '';
+            
+            courses.forEach(c => {
+                if(!c.name.toLowerCase().includes(search) && !c.code.toLowerCase().includes(search)) return;
+                grid.innerHTML += `
+                    <div class="course-card">
+                        <small style="color: var(--p); font-weight: bold;">${c.code}</small>
+                        <h4 style="margin: 5px 0;">${c.name}</h4>
+                        <p style="font-size: 0.8rem; color: #666; margin-bottom: 15px;">Beban: ${c.sks} SKS</p>
+                        <button class="btn btn-p" style="width: 100%; justify-content: center;" onclick="prepareEnroll(${c.id})">Ambil MK</button>
+                    </div>
+                `;
+            });
+        }
+
+        // Render Profil
+        function renderProfile() {
+            document.getElementById('disp-name').innerText = session.name;
+            document.getElementById('disp-nim').innerText = 'NIM: ' + session.nim;
+            
+            const myData = enrollments.filter(en => en.nim === session.nim);
+            const tbody = document.getElementById('table-profile');
+            let totalSks = 0;
+            tbody.innerHTML = '';
+            
+            myData.forEach(en => {
+                const c = courses.find(i => i.id === en.courseId);
+                if(c) {
+                    totalSks += c.sks;
+                    tbody.innerHTML += `<tr><td>${c.code}</td><td>${c.name}</td><td>${c.sks}</td><td>${en.status}</td><td>${en.grade}</td></tr>`;
+                }
+            });
+            document.getElementById('disp-sks').innerText = totalSks;
+        }
+
+        // Render Admin
+        function renderAdmin() {
+            const tbody = document.getElementById('table-admin-enrolls');
+            tbody.innerHTML = '';
+            enrollments.forEach(en => {
+                const c = courses.find(i => i.id === en.courseId);
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${en.nim}</td>
+                        <td>${en.name}</td>
+                        <td>${c ? c.name : 'Unknown'}</td>
+                        <td>${en.status}</td>
+                        <td><b>${en.grade}</b></td>
+                        <td><button class="btn btn-danger" onclick="deleteEnroll(${en.id})"><i class="fas fa-trash"></i></button></td>
+                    </tr>
+                `;
+            });
+        }
+
+        // Pendaftaran
+        function prepareEnroll(id) {
+            // Cek apakah sudah pernah ambil MK ini
+            const exists = enrollments.some(en => en.courseId === id && en.nim === session.nim);
+            if(exists) {
+                alert("Anda sudah terdaftar di mata kuliah ini!");
+                return;
+            }
+
+            const c = courses.find(i => i.id === id);
+            document.getElementById('target-id').value = id;
+            document.getElementById('target-course-name').innerText = c.name;
+            
+            if(session.role === 'student') {
+                document.getElementById('reg-nim').value = session.nim;
+                // Jika sudah ada nama selain default, isi otomatis
+                if(session.name !== 'Mahasiswa Baru') {
+                    document.getElementById('reg-name').value = session.name;
+                }
+            }
+            showModal('modal-enroll');
+        }
+
+        document.getElementById('formEnroll').onsubmit = function(e) {
+            e.preventDefault();
+            const cid = parseInt(document.getElementById('target-id').value);
+            const nimInput = document.getElementById('reg-nim').value;
+            const nameInput = document.getElementById('reg-name').value;
+            
+            // Simpan ke array pendaftaran
+            enrollments.push({
+                id: Date.now(),
+                courseId: cid,
+                nim: nimInput,
+                name: nameInput,
+                status: 'Aktif',
+                grade: '-'
+            });
+
+            // Update session jika nama masih default 'Mahasiswa Baru'
+            if(session.role === 'student' && (session.name === 'Mahasiswa Baru' || session.nim !== nimInput)) {
+                session.name = nameInput;
+                session.nim = nimInput;
+                localStorage.setItem('sima_session', JSON.stringify(session));
+            }
+
+            saveData();
+            hideModal('modal-enroll');
+            alert('Pendaftaran Berhasil! Data Anda telah tercatat.');
+            
+            // Jika sedang di view profil, langsung refresh tampilannya
+            if(document.getElementById('section-profile').classList.contains('active')) renderProfile();
+        };
+
+        // Tambah MK
+        document.getElementById('formAddCourse').onsubmit = function(e) {
+            e.preventDefault();
+            courses.push({
+                id: Date.now(),
+                code: document.getElementById('new-code').value.toUpperCase(),
+                name: document.getElementById('new-name').value,
+                sks: parseInt(document.getElementById('new-sks').value)
+            });
+            saveData();
+            hideModal('modal-course');
+        };
+
+        function deleteEnroll(id) {
+            if(confirm('Hapus pendaftaran ini?')) {
+                enrollments = enrollments.filter(en => en.id !== id);
+                saveData();
+                renderAdmin();
+            }
+        }
+
+        function exportData() {
+            let csv = "NIM,Nama,Mata Kuliah,Status,Nilai\n";
+            enrollments.forEach(en => {
+                const c = courses.find(i => i.id === en.courseId);
+                csv += `${en.nim},${en.name},${c ? c.name : 'Unknown'},${en.status},${en.grade}\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = 'Laporan_SIMA.csv'; a.click();
+        }
+
+        function saveData() {
+            localStorage.setItem('sima_courses', JSON.stringify(courses));
+            localStorage.setItem('sima_enrolls', JSON.stringify(enrollments));
+            renderPublic();
+        }
+
+        function showModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function hideModal(id) { document.getElementById(id).style.display = 'none'; }
+
+        function startApp() {
+            if (session) {
+                document.getElementById('view-login').style.display = 'none';
+                document.getElementById('main-app').style.display = 'flex';
+                
+                document.getElementById('nav-admin').style.display = (session.role === 'admin') ? 'inline-flex' : 'none';
+                document.getElementById('nav-profile').style.display = (session.role === 'student') ? 'inline-flex' : 'none';
+                
+                switchView(session.role === 'admin' ? 'admin' : 'public');
+            }
+        }
+
+        window.onload = startApp;
+    </script>
+</body>
+</html>
